@@ -1,0 +1,19 @@
+{
+  "name": "manage-images",
+  "version": "1.0.0",
+  "description": "manage jpg images",
+  "main": "index.js",
+  "dependencies": {
+    "commander": "^2.9.0",
+    "exif": "^0.6.0",
+    "fs-extra": "^3.0.1",
+    "moment": "^2.18.1",
+    "walk": "^2.3.9"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Sönke Nommensen",
+  "license": "MIT"
+}
