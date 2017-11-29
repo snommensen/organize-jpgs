@@ -9,7 +9,7 @@ program
   .version('1.0.0')
   .usage('<source> <target>')
   .option('-s, --source <src-dir>', 'Source dir for your JPG images')
-  .option('-t, --target <target-dir>', 'Target dir for your JPG images') 
+  .option('-t, --target <target-dir>', 'Target dir for your JPG images')
   .parse(process.argv);
 
 if (!program.source) {
@@ -72,16 +72,13 @@ const chooseDate = (imageData) => {
     }
 };
 
-const options = {
-    followLinks: false
-};
-
-const walker = walk.walk(src, options);
+const walker = walk.walk(src, { followLinks: false });
 
 walker.on("file", (root, fileStats, next) => {
     readExif(root, fileStats.name, (error, imageData) => {
         if (error) {
             console.error(error.message);
+            next();
         } else {
             let name = imageData.name;
             let date = chooseDate(imageData);
@@ -93,14 +90,20 @@ walker.on("file", (root, fileStats, next) => {
             fs.mkdirp(targetDir, (err) => {
                 if (err) {
                     console.error(err);
+                    next();
                 } else {
                     fs.copy(`${path.join(root, fileStats.name)}`, `${targetDir}/${name}`)
-                        .then(() => console.log(`copied ${name} to ${targetDir}/${name}`))
-                        .catch(err => console.error(`${fileStats.name}: ${err}`));
+                        .then(() => {
+                            console.log(`copied ${name} to ${targetDir}/${name}`)
+                            next();
+                         })
+                        .catch(err => {
+                            console.error(`${fileStats.name}: ${err}`)
+                            next();
+                        });
                 }
             });
         }
-        next();
     });
 });
 
