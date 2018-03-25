@@ -72,6 +72,14 @@ const chooseDate = (imageData) => {
     }
 };
 
+const makeTargetDir = (imageData) => {
+    const date = chooseDate(imageData);
+    const month = pad(date.month() + 1);
+    const year = pad(date.year());
+    const day = pad(date.date());
+    return `${target}/${year}/${year}-${month}-${day}`;
+}
+
 const walker = walk.walk(src, { followLinks: false });
 
 walker.on("file", (root, fileStats, next) => {
@@ -80,27 +88,27 @@ walker.on("file", (root, fileStats, next) => {
             console.error(error.message);
             next();
         } else {
-            let name = imageData.name;
-            let date = chooseDate(imageData);
-            let month = pad(date.month() + 1);
-            let year = pad(date.year());
-            let day = pad(date.date());
-
-            let targetDir = `${target}/${year}/${year}-${month}-${day}`;
+            const name = imageData.name;
+            const targetDir = makeTargetDir(imageData);
             fs.mkdirp(targetDir, (err) => {
                 if (err) {
                     console.error(err);
                     next();
                 } else {
-                    fs.copy(`${path.join(root, fileStats.name)}`, `${targetDir}/${name}`)
-                        .then(() => {
-                            console.log(`copied ${name} to ${targetDir}/${name}`)
-                            next();
-                         })
-                        .catch(err => {
-                            console.error(`${fileStats.name}: ${err}`)
-                            next();
-                        });
+                    const targetPath = `${targetDir}/${name}`;
+                    if (fs.existsSync(targetPath)) {
+                        next();
+                    } else {
+                        fs.copy(`${path.join(root, fileStats.name)}`, targetPath)
+                            .then(() => {
+                                console.log(`copied ${name} to ${targetDir}/${name}`)
+                                next();
+                            })
+                            .catch(err => {
+                                console.error(`${fileStats.name}: ${err}`)
+                                next();
+                            });
+                    }
                 }
             });
         }
