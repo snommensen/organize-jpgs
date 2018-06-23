@@ -41,21 +41,22 @@ const isJpeg = (fileName) => {
 
 const readExif = (root, fileName, callback) => {
     let fullPath = path.join(root, fileName)
-    if (isJpeg(fileName)) {
-        new ExifImage({ image: fullPath }, (error, exifData) => {
-            if (error) {
-                callback(error)
-            } else {
-                callback(null, {
-                    name: fileName,
-                    created: exifData.exif.CreateDate,
-                    modified: exifData.image.ModifyDate
-                })
-            }
-        })
-    } else {
+    if (!isJpeg(fileName)) {
         callback({ message: `No JPG file! => ${fileName}` })
     }
+
+    new ExifImage({ image: fullPath }, (error, exifData) => {
+        if (error) {
+            callback(error)
+        } else {
+            const imageData = {
+                name: fileName,
+                created: exifData.exif.CreateDate,
+                modified: exifData.image.ModifyDate
+            }
+            callback(null, imageData)
+        }
+    })
 }
 
 const pad = (number) => {
@@ -76,12 +77,30 @@ const chooseDate = (imageData) => {
     }
 }
 
-const makeTargetDir = (imageData) => {
+function makeTargetDir (imageData) {
     const date = chooseDate(imageData)
     const month = pad(date.month() + 1)
     const year = pad(date.year())
     const day = pad(date.date())
     return `${target}/${year}/${year}-${month}-${day}`
+}
+
+function copyJpgs(targetDir, name, next, root, fileStats) {
+    const targetPath = `${targetDir}/${name}`
+    
+    if (fs.existsSync(targetPath)) {
+        next()
+    } else {
+        fs.copy(`${path.join(root, fileStats.name)}`, targetPath)
+            .then(() => {
+                console.log(`copied ${name} to ${targetDir}/${name}`)
+                next()
+            })
+            .catch(err => {
+                console.error(`${fileStats.name}: ${err}`)
+                next()
+            })
+    }
 }
 
 const walker = walk.walk(src, { followLinks: false })
@@ -99,20 +118,7 @@ walker.on("file", (root, fileStats, next) => {
                     console.error(err)
                     next()
                 } else {
-                    const targetPath = `${targetDir}/${name}`
-                    if (fs.existsSync(targetPath)) {
-                        next()
-                    } else {
-                        fs.copy(`${path.join(root, fileStats.name)}`, targetPath)
-                            .then(() => {
-                                console.log(`copied ${name} to ${targetDir}/${name}`)
-                                next()
-                            })
-                            .catch(err => {
-                                console.error(`${fileStats.name}: ${err}`)
-                                next()
-                            })
-                    }
+                    copyJpgs(targetDir, name, next, root, fileStats);
                 }
             })
         }
