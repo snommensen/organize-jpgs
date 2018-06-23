@@ -4,11 +4,11 @@
   "description": "manage jpg images",
   "main": "index.js",
   "dependencies": {
-    "commander": "^2.9.0",
+    "commander": "^2.15.1",
     "exif": "^0.6.0",
     "fs-extra": "^3.0.1",
-    "moment": "^2.18.1",
-    "walk": "^2.3.9"
+    "moment": "^2.22.2",
+    "walk": "^2.3.13"
   },
   "devDependencies": {},
   "scripts": {
