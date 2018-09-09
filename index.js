@@ -24,7 +24,7 @@ if (!program.target) {
     process.exit(1)
 }
 
-const src = program.source
+const source = program.source
 const target = program.target
 
 const parseDate = (date) => {
@@ -103,7 +103,7 @@ function copyJpgs(targetDir, name, next, root, fileStats) {
     }
 }
 
-const walker = walk.walk(src, { followLinks: false })
+const walker = walk.walk(source, { followLinks: false })
 
 walker.on("file", (root, fileStats, next) => {
     readExif(root, fileStats.name, (error, imageData) => {
