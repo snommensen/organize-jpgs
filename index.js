@@ -6,11 +6,11 @@ const moment = require('moment')
 const program = require('commander')
 
 program
-  .version('1.0.0')
-  .usage('<source> <target>')
-  .option('-s, --source <src-dir>', 'Source dir for your JPG images')
-  .option('-t, --target <target-dir>', 'Target dir for your JPG images')
-  .parse(process.argv)
+    .version('1.0.0')
+    .usage('<source> <target>')
+    .option('-s, --source <src-dir>', 'Source dir for your JPG images')
+    .option('-t, --target <target-dir>', 'Target dir for your JPG images')
+    .parse(process.argv)
 
 if (!program.source) {
     console.error('no source given!')
@@ -35,28 +35,32 @@ const parseDate = (date) => {
     return moment(date, dateFormat)
 }
 
-const isJpeg = (fileName) => {
-    return fileName != null && (fileName.endsWith('.jpg') || fileName.endsWith('.JPG') || fileName.endsWith('.jpeg'))
-}
+const isJpeg = (fileName) => fileName != null && (fileName.endsWith('.jpg') || fileName.endsWith('.JPG') || fileName.endsWith('.jpeg'))
 
 const readExif = (root, fileName, callback) => {
     let fullPath = path.join(root, fileName)
+
     if (!isJpeg(fileName)) {
-        callback({ message: `No JPG file! => ${fileName}` })
+        callback({
+            message: `No JPG file! => ${fileName}`
+        })
     }
 
-    new ExifImage({ image: fullPath }, (error, exifData) => {
+    const handleExifData = (error, exifData) => {
         if (error) {
             callback(error)
         } else {
-            const imageData = {
+            callback(null, {
                 name: fileName,
                 created: exifData.exif.CreateDate,
                 modified: exifData.image.ModifyDate
-            }
-            callback(null, imageData)
+            })
         }
-    })
+    }
+
+    new ExifImage({
+        image: fullPath
+    }, handleExifData)
 }
 
 const pad = (number) => {
@@ -77,7 +81,7 @@ const chooseDate = (imageData) => {
     }
 }
 
-function makeTargetDir (imageData) {
+function makeTargetDir(imageData) {
     const date = chooseDate(imageData)
     const month = pad(date.month() + 1)
     const year = pad(date.year())
@@ -87,7 +91,7 @@ function makeTargetDir (imageData) {
 
 function copyJpgs(targetDir, name, next, root, fileStats) {
     const targetPath = `${targetDir}/${name}`
-    
+
     if (fs.existsSync(targetPath)) {
         next()
     } else {
@@ -103,7 +107,9 @@ function copyJpgs(targetDir, name, next, root, fileStats) {
     }
 }
 
-const walker = walk.walk(source, { followLinks: false })
+const walker = walk.walk(source, {
+    followLinks: false
+})
 
 walker.on("file", (root, fileStats, next) => {
     readExif(root, fileStats.name, (error, imageData) => {
